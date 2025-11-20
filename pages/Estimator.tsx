@@ -1,4 +1,4 @@
-
+update
 import React, { useState } from 'react';
 import { GenericCalculatorForm } from '../components/CalculatorForms';
 import { PartType } from '../types';
@@ -24,6 +24,7 @@ import {
     Search
 } from 'lucide-react';
 import { NeuCard, NeuButton, NeuInput } from '../components/Neu';
+import { update } from 'firebase/database';
 
 // Map part types to icons
 const ToolIcons: Record<string, any> = {
@@ -115,4 +116,81 @@ export const Estimator: React.FC = () => {
                     </NeuButton>
                     <div>
                         <h1 className="text-3xl font-display font-black text-white flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-2xl bg-[#1e2124] shadow-[5px_5px_10px_#151719,-5px_-5px_10px_#272b31] flex items-center justify-center text-cyan-
+                            <div className="w-12 h-12 rounded-2xl bg-[#1e2124] shadow-[5px_5px_10px_#151719,-5px_-5px_10px_#272b31] flex items-center justify-center text-cyan-400">
+                                <ToolIcon size={24} />
+                            </div>
+                            {toolLabel}
+                        </h1>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <NeuCard>
+                        <h2 className="text-xl font-bold text-white mb-4">Inputs</h2>
+                        <GenericCalculatorForm
+                            partType={selectedTool}
+                            data={data}
+                            onChange={setData}
+                        />
+                        <div className="mt-6 flex justify-end">
+                           <NeuButton onClick={handleCalculate} className="bg-cyan-500 text-white font-bold">
+                                <Calculator size={18} className="mr-2"/>
+                                Calculate
+                            </NeuButton>
+                        </div>
+                    </NeuCard>
+
+                    {result && (
+                         <NeuCard>
+                            <h2 className="text-xl font-bold text-white mb-4">Results</h2>
+                            <pre className="text-sm text-slate-300 bg-[#1e2124] p-4 rounded-lg overflow-x-auto">
+                                {JSON.stringify(result, null, 2)}
+                            </pre>
+                        </NeuCard>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
+    // Tool Selection View
+    return (
+        <div className="animate-in slide-in-from-bottom-8 duration-500 fade-in max-w-6xl mx-auto">
+            <h1 className="text-4xl font-display font-black text-white mb-8 text-center">Estimator Tools</h1>
+            
+            <div className="mb-8 max-w-md mx-auto">
+                 <NeuInput
+                    type="text"
+                    placeholder="Search for a tool..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    icon={<Search size={20}/>}
+                />
+            </div>
+
+            {filteredGroups.map(group => (
+                 <div key={group.title} className="mb-12">
+                    <h2 className="text-2xl font-bold text-slate-300 mb-6 flex items-center gap-3">
+                        <div className="w-3 h-3 bg-cyan-400 rounded-full shadow-[0_0_10px_#0ff] animate-pulse"></div>
+                        {group.title}
+                    </h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                        {group.tools.map(tool => {
+                            const Icon = ToolIcons[tool.id] || Hammer;
+                            return (
+                                <NeuButton 
+                                    key={tool.id} 
+                                    onClick={() => setSelectedTool(tool.id as PartType)}
+                                    className="flex flex-col items-center justify-center h-32 text-center"
+                                >
+                                    <Icon size={32} className="mb-2 text-cyan-400"/>
+                                    <span className="text-sm font-semibold text-slate-300">{tool.label}</span>
+                                </NeuButton>
+                            );
+                        })}
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
