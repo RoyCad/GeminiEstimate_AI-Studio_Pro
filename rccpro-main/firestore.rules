@@ -1,0 +1,61 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if the current user is an Admin.
+    function isAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin';
+    }
+
+    // Helper function to check if the user is the owner of a given project.
+    function isProjectOwner(projectId) {
+      return get(/databases/$(database)/documents/projects/$(projectId)).data.userId == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      // Admins can create new users, but only with the 'Client' role.
+      allow create: if isAdmin() && request.resource.data.role == 'Client';
+      
+      // An authenticated user can read and update their own profile.
+      // Admins can read or update any user profile.
+      allow read, update: if request.auth.uid == userId || isAdmin();
+    }
+
+    match /projects/{projectId} {
+      // Admins can create, read, update, and delete any project.
+      allow read, write: if isAdmin();
+      
+      // Clients can only read projects that are assigned to them.
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+    
+    match /projects/{projectId}/{subcollection}/{docId} {
+        // Admins can read and write to any subcollection.
+        allow read, write: if isAdmin();
+
+        // Clients can read from any subcollection of a project they own.
+        allow read: if request.auth != null && isProjectOwner(projectId);
+    }
+    
+    match /materialProposals/{proposalId} {
+        // Admins can manage all material proposals.
+        allow read, write: if isAdmin();
+
+        // Clients can create proposals for themselves.
+        allow create: if request.auth != null && request.resource.data.submittedBy == request.auth.uid;
+        
+        // Clients can read proposals they have submitted.
+        allow read: if request.auth != null && resource.data.submittedBy == request.auth.uid;
+    }
+    
+    match /materials/{materialId} {
+        // Admins can manage the central material stock.
+        allow write: if isAdmin();
+
+        // Any authenticated user can read the central material stock.
+        allow read: if request.auth != null;
+    }
+  }
+}

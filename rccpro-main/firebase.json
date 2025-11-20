@@ -1,0 +1,9 @@
+{
+  "hosting": {
+    "site": "studio-7142193152-eba66",
+    "source": ".",
+    "frameworksBackend": {
+      "region": "asia-east1"
+    }
+  }
+}
